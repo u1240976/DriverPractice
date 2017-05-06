@@ -92,6 +92,33 @@ static ssize_t example_write(struct file *filp, const char __user *buf, size_t s
 	return ret;
 }
 
+loff_t example_llseek(struct file *filp, loff_t off, int whence){
+	loff_t newpos;
+
+	switch(whence) {
+	  case SEEK_SET:
+		newpos = off;
+		break;
+
+	  case SEEK_CUR:
+		newpos = filp->f_pos + off;
+		break;
+
+	  case SEEK_END:
+		newpos = strlen(data) + off;
+		break;
+
+	  default: /* can't happen */
+		return -EINVAL;
+	}
+
+	if (newpos < 0)
+		return -EINVAL;
+
+	filp->f_pos = newpos;
+	return newpos;
+}
+
 static long example_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
 	long ret;
 	int *pval;
@@ -127,6 +154,7 @@ static struct file_operations example_fops = {
 	.release = example_close,
 	.read = example_read,
 	.write = example_write,
+    .llseek = example_llseek,
 	.unlocked_ioctl = example_ioctl,
 };
 
